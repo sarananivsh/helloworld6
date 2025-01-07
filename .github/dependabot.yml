@@ -1,0 +1,17 @@
+# .github/dependabot.yml
+
+version: 2
+updates:
+  - package-ecosystem: "maven"       # Specify Maven as the package manager
+    directory: "/"                    # Root directory of the repository
+    schedule:
+      interval: "daily"              # Frequency of checking for dependency updates (options: "daily", "weekly", "monthly")
+    commit-message:
+      prefix: "chore"                 # Prefix for commit messages (e.g., "chore", "fix")
+    open-pull-requests-limit: 10      # Limit the number of open PRs Dependabot can create
+
+    # Optionally specify versioning policies
+    # Optional: Ignore certain dependencies or versions
+    ignore:
+      - dependency-name: "mule-api"
+        versions: ["3.x.x"]
