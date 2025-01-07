@@ -1,0 +1,78 @@
+name: Auto Retry Merges for UNKNOWN PRs
+
+on:
+  workflow_dispatch:  # Manual trigger for the workflow
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour (customize as needed)
+
+jobs:
+  retry-unknown-prs:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write  # Ensure permission to merge PRs
+      contents: write  # Allow pushing commits
+      issues: write  # Allow commenting on PRs if needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Set Git User Identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Retry 'UNKNOWN' state PRs by re-triggering status checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token for authentication
+        run: |
+          # Fetch all open PRs with 'dependencies' label and check their mergeable status
+          pr_list=$(gh pr list --state open --label "dependencies" --json number,mergeable -q '.[].number')
+          echo "PR list with dependencies: $pr_list"
+          
+          for pr_number in $pr_list; do
+            # Get the current mergeable status
+            mergeable_status=$(gh pr view $pr_number --json mergeable -q '.mergeable')
+
+            if [[ "$mergeable_status" == "CONFLICT" ]]; then
+                echo "PR #$pr_number has conflicts. Skipping merge attempt."
+            elif [[ "$mergeable_status" == "UNKNOWN" ]]; then
+                echo "PR #$pr_number is in 'UNKNOWN' state. Re-triggering status checks..."
+                
+                # Step 1: Add a comment to trigger a re-check (GitHub reprocesses the PR)
+                gh pr comment $pr_number --body "Re-triggering status checks for PR #$pr_number."
+                
+                # Step 2: Fetch the PR and check it out (correct method)
+                gh pr checkout $pr_number  # Correct command to checkout the PR
+                
+                # Step 3: Push an empty commit to trigger status re-evaluation (GitHub rechecks the mergeable state)
+                git commit --allow-empty -m "Triggering status recheck for PR #$pr_number"
+                git push origin HEAD
+                
+                # Step 4: Wait a few seconds for status checks to update (optional)
+                echo "Waiting for status checks to complete..."
+                sleep 30  # Wait for 30 seconds for status checks to complete
+                
+                # Step 5: Retry the merge
+                echo "Attempting to auto-merge PR #$pr_number..."
+                if ! gh pr merge $pr_number --merge --auto --delete-branch; then
+                  echo "Failed to merge PR #$pr_number despite re-triggering status checks."
+                else
+                  echo "Successfully merged PR #$pr_number."
+                fi
+            else
+                echo "PR #$pr_number is in a valid state. Attempting to auto-merge..."
+                # Attempt auto-merge for non-UNKNOWN state PRs
+                if ! gh pr merge $pr_number --merge --auto --delete-branch; then
+                  echo "Failed to merge PR #$pr_number."
+                else
+                  echo "Successfully merged PR #$pr_number."
+                fi
+            fi
+          done
