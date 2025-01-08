@@ -14,7 +14,19 @@ permissions:
   pull-requests: write  # Grant permissions to merge PRs
 
 jobs:
+  create_backup_branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger create-backup-branch workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          repository: your-username/your-repo-name
+          workflow: create-backup-branch.yml  # The workflow to call
+          ref: refs/heads/main  # You can use main or any relevant branch
+
   auto-merge:
+    needs: create_backup_branch  # Ensure this job runs only after the create-backup-branch job finishes
     runs-on: ubuntu-latest
 
     steps:
