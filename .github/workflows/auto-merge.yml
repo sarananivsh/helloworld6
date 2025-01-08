@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Trigger create-backup-branch workflow
-        uses: peter-evans/workflow-dispatch@v1
+        uses: peter-evans/workflow-dispatch@v1.0.0 
         with:
           repository: your-username/your-repo-name
           workflow: create-backup-branch.yml  # The workflow to call
