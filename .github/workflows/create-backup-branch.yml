@@ -47,4 +47,11 @@ jobs:
           # Create a new backup branch from the main (or current PR branch)
           git checkout -b $BACKUP_BRANCH
           
-          # Push the new
+          # Push the new backup branch to the remote repository
+          git push origin $BACKUP_BRANCH
+          
+          echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
+
+      - name: Finish Create Mule3_backup Branch
+        run: echo "Mule3_backup branch creation process completed."
+
