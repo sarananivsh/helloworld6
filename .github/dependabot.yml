@@ -2,7 +2,7 @@
 
 version: 2
 updates:
-  - package-ecosystem: "maven"       # Specify Maven as the package manager
+  - package-ecosystem: "maven"       # Specify Maven as the package managers
     directory: "/"                    # Root directory of the repository
     schedule:
       interval: "daily"              # Frequency of checking for dependency updates (options: "daily", "weekly", "monthly")
