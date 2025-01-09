@@ -29,9 +29,12 @@ jobs:
         with:
           script: |
             try {
-              // Retrieve repository owner and name from context directly
-              const owner = github.context.repo.owner;
-              const repo = github.context.repo.repo;
+              const context = github.context;
+              console.log('GitHub context:', context);  // Log context for debugging purposes
+
+              // Retrieve repository owner and name from context
+              const owner = context.repo.owner;
+              const repo = context.repo.repo;
 
               if (!owner || !repo) {
                 throw new Error('Missing owner or repo information from context.');
