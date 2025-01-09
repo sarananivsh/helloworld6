@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository using Personal Access Token (PAT)
+      # Step 1: Checkout repository using GITHUB_TOKEN
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Use PAT for authentication
+          token: ${{ secrets.GITHUB_TOKEN }}  # Use default GitHub token for authentication
 
       # Step 2: Set up Git user for commit actions
       - name: Set up Git user
