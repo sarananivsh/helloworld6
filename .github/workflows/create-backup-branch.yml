@@ -1,60 +1,50 @@
 name: Create and Push Backup Branch
 
 on:
-  workflow_dispatch:  # Triggered manually or by API call
+  workflow_dispatch:  # This allows the workflow to be triggered by another workflow
   push:
     branches:
-      - main  # You can change this to whatever branch you want to trigger the workflow
+      - main  # Trigger workflow when there is a push to the main branch (you can modify this)
 
 jobs:
   create-backup-branch:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Ensure write access to contents for creating branches
+      contents: write  # Ensures write access to contents for creating branches
 
     steps:
-    # Step 1: Check out the repository
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    # Step 2: Check if the folder exists
-    - name: Check if folder exists
-      id: check-folder
-      run: |
-        # Replace 'path_to_folder' with the folder you want to check
-        if [ -d "path_to_folder" ]; then
-          echo "Folder exists"
-          echo "exists=true" >> $GITHUB_ENV
-        else
-          echo "Folder does not exist"
-          echo "exists=false" >> $GITHUB_ENV
-        fi
+      - name: Check if folder exists
+        id: check-folder
+        run: |
+          if [ -d "path_to_folder" ]; then
+            echo "Folder exists"
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "Folder does not exist"
+            echo "exists=false" >> $GITHUB_ENV
+          fi
 
-    # Step 3: Create and push the new branch only if the folder does not exist
-    - name: Create and push new branch
-      if: env.exists == 'false'  # Only run if the folder doesn't exist
-      run: |
-        # Set up Git user for actions
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
+      - name: Create and push new branch
+        if: env.exists == 'false'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
 
-        # Fetch the latest changes from the remote repository
-        git fetch origin
+          git fetch origin
+          git checkout -b Mule3_backup
 
-        # Create and switch to the new branch
-        git checkout -b Mule3_backup
+          if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
+            echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
+            git pull --rebase origin Mule3_backup || {
+              echo "Rebase failed due to conflicts, aborting rebase.";
+              git rebase --abort;
+            }
+          else
+            echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
+          fi
 
-        # Check if the remote branch exists, and if so, pull the latest changes
-        if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
-          echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
-          git pull --rebase origin Mule3_backup || {
-            echo "Rebase failed due to conflicts, aborting rebase.";
-            git rebase --abort;  # Abort rebase in case of conflict
-          }
-        else
-          echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
-        fi
-
-        # Force push the new branch to the repository
-        git push --force origin Mule3_backup
+          git push --force origin Mule3_backup
