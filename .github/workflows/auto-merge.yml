@@ -29,13 +29,9 @@ jobs:
         with:
           script: |
             try {
-              // Manually define the owner and repo since github.context might not be available in workflow_dispatch
-              const owner = process.env.GITHUB_REPOSITORY.split('/')[0];  // Extracts the owner from GITHUB_REPOSITORY environment variable
-              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];    // Extracts the repo name from GITHUB_REPOSITORY
+              const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
+              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
 
-              if (!owner || !repo) {
-                throw new Error('Missing owner or repo information.');
-              }
 
               console.log('Repository details:', owner, repo);
 
@@ -60,9 +56,13 @@ jobs:
               const response = await github.rest.actions.createWorkflowDispatch({
                 owner: owner,
                 repo: repo,
-                workflow_id: workflow_id,  // Use the workflow ID
-                ref: 'refs/heads/main',  // Trigger on the main branch
-              });
+                workflow_id: workflow_id,
+                ref: 'refs/heads/main',
+                // Make sure the token has proper permissions
+                headers: {
+                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+                }
+             });
 
               console.log('Backup branch workflow triggered successfully:', response);
             } catch (error) {
