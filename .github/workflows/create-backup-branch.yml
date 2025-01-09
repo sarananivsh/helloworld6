@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository using the Personal Access Token (PAT)
+      # Step 1: Checkout repository using Personal Access Token (PAT)
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
