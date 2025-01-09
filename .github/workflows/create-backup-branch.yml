@@ -51,8 +51,8 @@ jobs:
           # Create a new backup branch from the main (or current PR branch)
           git checkout -b $BACKUP_BRANCH
           
-          # Push the new backup branch to the remote repository
-          git push origin $BACKUP_BRANCH
+          # Push the new backup branch to the remote repository using PAT for authentication
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
           
           echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
 
