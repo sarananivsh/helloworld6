@@ -7,8 +7,8 @@ on:
       - synchronize
       - reopened
     branches:
-      - main
-
+      - main          # Adjust to the base branch for your PR
+  workflow_dispatch:  # This allows manual or API-triggered execution
 jobs:
   create-backup:
     runs-on: ubuntu-latest
