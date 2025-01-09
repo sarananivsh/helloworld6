@@ -15,6 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write  # Add actions permission for triggering workflows
 
 jobs:
   create_backup_branch:
@@ -31,7 +32,6 @@ jobs:
             try {
               const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
               const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
-
 
               console.log('Repository details:', owner, repo);
 
@@ -57,12 +57,8 @@ jobs:
                 owner: owner,
                 repo: repo,
                 workflow_id: workflow_id,
-                ref: 'refs/heads/main',
-                // Make sure the token has proper permissions
-                headers: {
-                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
-                }
-             });
+                ref: 'refs/heads/main'
+              });
 
               console.log('Backup branch workflow triggered successfully:', response);
             } catch (error) {
