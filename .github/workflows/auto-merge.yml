@@ -29,18 +29,23 @@ jobs:
         with:
           script: |
             try {
-              // Access the repository owner and repo name using the github context.
+              // Ensure that github.context is available
+              if (!github.context || !github.context.repo) {
+                throw new Error('GitHub context is not properly initialized.');
+              }
+
+              // Access the repository owner and repo name from the context
               const owner = github.context.repo.owner;
               const repo = github.context.repo.repo;
 
               if (!owner || !repo) {
-                throw new Error('Owner or repository information is missing in the context.');
+                throw new Error('Repository owner or name is missing in the context.');
               }
 
-              // Trigger the 'create-backup-branch.yml' workflow dispatch
+              // Fetch workflows for the given repository
               const workflows = await github.rest.actions.listRepoWorkflows({
-                owner,
-                repo
+                owner: owner,
+                repo: repo
               });
 
               const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
@@ -49,18 +54,19 @@ jobs:
                 throw new Error('Workflow "create-backup-branch.yml" not found.');
               }
 
+              // Trigger the workflow dispatch
               const workflowId = workflow.id;
 
               const response = await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
+                owner: owner,
+                repo: repo,
                 workflow_id: workflowId,
                 ref: 'refs/heads/main'
               });
 
               console.log('Backup branch workflow triggered successfully:', response);
             } catch (error) {
-              console.error('Error triggering backup branch workflow:', error);
+              console.error('Error triggering backup branch workflow:', error.message);
             }
 
   auto-merge:
