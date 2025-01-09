@@ -29,14 +29,13 @@ jobs:
         with:
           script: |
             try {
-              // Fetch the repository details using the GitHub API
-              const { data: repository } = await github.rest.repos.get({
-                owner: github.context.actor, // Get the actor (username) of the current run
-                repo: github.context.repo.repo,
-              });
+              // Retrieve repository owner and name from context directly
+              const owner = github.context.repo.owner;
+              const repo = github.context.repo.repo;
 
-              const owner = repository.owner.login;
-              const repo = repository.name;
+              if (!owner || !repo) {
+                throw new Error('Missing owner or repo information from context.');
+              }
 
               console.log('Repository details:', owner, repo);
 
