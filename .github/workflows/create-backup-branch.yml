@@ -1,36 +1,38 @@
 name: Create Mule3_backup Branch Before Other Workflows Start
 
 on:
+  workflow_dispatch:  # Triggered manually or by API call
   pull_request:
     types:
-      - opened
-      - synchronize
-      - reopened
+      - opened        # Trigger when a PR is opened
+      - synchronize   # Trigger when a PR is updated
+      - reopened      # Trigger when a PR is reopened
     branches:
-      - main
-  workflow_dispatch:  # This allows manual or API-triggered execution
+      - main          # Adjust to the base branch for your PR
+
 jobs:
   create-backup:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository using the Personal Access Token (PAT)
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Use PAT for authentication
 
-      - name: Fetch all branches from remote
+      # Step 2: Set up Git user for commit actions
+      - name: Set up Git user
         run: |
-          git fetch --all
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Step 3: Check if the backup branch exists
       - name: Check if Mule3_backup branch exists
         id: check_backup
         run: |
           BACKUP_BRANCH="Mule3_backup"
-          
-          # Use the GitHub CLI to check if the branch exists on the remote repository
-          echo "Checking if the branch '$BACKUP_BRANCH' exists on the remote repository..."
-          
-          # Query the repository's branches using GitHub CLI
-          if gh api repos/${{ github.repository }}/branches/$BACKUP_BRANCH --silent; then
+          if git ls-remote --heads origin "refs/heads/$BACKUP_BRANCH"; then
             echo "Backup branch '$BACKUP_BRANCH' already exists. Skipping creation."
             echo "backup_exists=true" >> $GITHUB_ENV
           else
@@ -38,6 +40,7 @@ jobs:
             echo "backup_exists=false" >> $GITHUB_ENV
           fi
 
+      # Step 4: Create Mule3_backup branch if it doesn't exist
       - name: Create Mule3_backup branch (if not exists)
         if: env.backup_exists == 'false'
         run: |
@@ -46,16 +49,17 @@ jobs:
           # Fetch the latest changes from the remote repository
           git fetch origin
           
-          # Checkout the main branch (or the branch from which you want to create the backup)
+          # Checkout the main branch (or PR branch)
           git checkout main
           
-          # Create a new backup branch from the main
+          # Create a new branch from main
           git checkout -b $BACKUP_BRANCH
           
-          # Push the new backup branch to the remote repository
+          # Push the new branch to the remote repository
           git push origin $BACKUP_BRANCH
           
           echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
 
+      # Step 5: Final message (completed)
       - name: Finish Create Mule3_backup Branch
         run: echo "Mule3_backup branch creation process completed."
