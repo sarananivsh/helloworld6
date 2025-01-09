@@ -28,26 +28,24 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const { github, context } = require('@actions/github'); // Import GitHub client explicitly
-            const workflowName = 'create-backup-branch.yml';
-            
             try {
+              // Trigger the 'create-backup-branch.yml' workflow dispatch
               const workflows = await github.rest.actions.listRepoWorkflows({
-                owner: context.repo.owner,
-                repo: context.repo.repo
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo
               });
 
-              const workflow = workflows.data.find(wf => wf.name === workflowName);
+              const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
 
               if (!workflow) {
-                throw new Error(`Workflow ${workflowName} not found.`);
+                throw new Error('Workflow "create-backup-branch.yml" not found.');
               }
 
               const workflowId = workflow.id;
-              
+
               const response = await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
                 workflow_id: workflowId,
                 ref: 'refs/heads/main'
               });
