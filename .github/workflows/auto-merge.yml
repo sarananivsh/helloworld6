@@ -29,44 +29,39 @@ jobs:
         with:
           script: |
             try {
-              // Ensure that github.context is available
-              if (!github.context || !github.context.repo) {
-                throw new Error('GitHub context is not properly initialized.');
+              // Verify that the context and repo information is available
+              const { repo, owner } = github.context.repo;
+
+              if (!repo || !owner) {
+                throw new Error('GitHub context is missing repo or owner information');
               }
 
-              // Access the repository owner and repo name from the context
-              const owner = github.context.repo.owner;
-              const repo = github.context.repo.repo;
-
-              if (!owner || !repo) {
-                throw new Error('Repository owner or name is missing in the context.');
-              }
-
-              // Fetch workflows for the given repository
+              // List workflows in the repository
               const workflows = await github.rest.actions.listRepoWorkflows({
                 owner: owner,
-                repo: repo
+                repo: repo,
               });
 
+              // Find the workflow ID for the 'create-backup-branch.yml'
               const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
-
+              
               if (!workflow) {
-                throw new Error('Workflow "create-backup-branch.yml" not found.');
+                throw new Error('create-backup-branch.yml workflow not found.');
               }
 
-              // Trigger the workflow dispatch
-              const workflowId = workflow.id;
+              const workflow_id = workflow.id;
 
+              // Trigger the workflow using its ID
               const response = await github.rest.actions.createWorkflowDispatch({
                 owner: owner,
                 repo: repo,
-                workflow_id: workflowId,
-                ref: 'refs/heads/main'
+                workflow_id: workflow_id,  // Use the workflow ID
+                ref: 'refs/heads/main',  // Trigger on the main branch
               });
 
               console.log('Backup branch workflow triggered successfully:', response);
             } catch (error) {
-              console.error('Error triggering backup branch workflow:', error.message);
+              console.error('Error triggering backup branch workflow:', error);
             }
 
   auto-merge:
