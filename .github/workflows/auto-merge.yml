@@ -29,10 +29,18 @@ jobs:
         with:
           script: |
             try {
+              // Access the repository owner and repo name using the github context.
+              const owner = github.context.repo.owner;
+              const repo = github.context.repo.repo;
+
+              if (!owner || !repo) {
+                throw new Error('Owner or repository information is missing in the context.');
+              }
+
               // Trigger the 'create-backup-branch.yml' workflow dispatch
               const workflows = await github.rest.actions.listRepoWorkflows({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo
+                owner,
+                repo
               });
 
               const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
@@ -44,8 +52,8 @@ jobs:
               const workflowId = workflow.id;
 
               const response = await github.rest.actions.createWorkflowDispatch({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
+                owner,
+                repo,
                 workflow_id: workflowId,
                 ref: 'refs/heads/main'
               });
