@@ -55,8 +55,8 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Push the new backup branch to the remote repository using PAT for authentication
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
+          # Push the new backup branch to the remote repository using GITHUB_TOKEN
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
           
           echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
 
