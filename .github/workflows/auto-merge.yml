@@ -29,15 +29,12 @@ jobs:
         with:
           script: |
             try {
-              const context = github.context;
-              console.log('GitHub context:', context);  // Log context for debugging purposes
-
-              // Retrieve repository owner and name from context
-              const owner = context.repo.owner;
-              const repo = context.repo.repo;
+              // Manually define the owner and repo since github.context might not be available in workflow_dispatch
+              const owner = process.env.GITHUB_REPOSITORY.split('/')[0];  // Extracts the owner from GITHUB_REPOSITORY environment variable
+              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];    // Extracts the repo name from GITHUB_REPOSITORY
 
               if (!owner || !repo) {
-                throw new Error('Missing owner or repo information from context.');
+                throw new Error('Missing owner or repo information.');
               }
 
               console.log('Repository details:', owner, repo);
