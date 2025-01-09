@@ -28,6 +28,10 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const { GitHub, context } = require('@actions/github');
+            const token = process.env.GITHUB_TOKEN;
+            const github = new GitHub(token);
+
             const workflow_id = 'create-backup-branch.yml';
             const ref = 'refs/heads/main';
 
