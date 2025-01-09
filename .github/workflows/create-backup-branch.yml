@@ -20,28 +20,28 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}  # Ensure authentication
 
-      - name: Verify current branch
+      - name: Fetch all branches and prune any stale ones
         run: |
-          git branch -a  # Check all branches (including remote branches)
-          git remote -v  # Verify the remotes and URL
+          # Fetch all branches from origin, prune deleted ones, and make sure we have all the data
+          git fetch --all --prune
+          # List all the branches (both remote and local) to ensure we're seeing the full set
+          git branch -a
+          git remote show origin
 
-      - name: Fetch the latest branches and prune deleted ones
-        run: |
-          # Ensure we fetch the latest state from the remote
-          git fetch --prune origin
-          echo "Fetched branches:"
-          git branch -a  # List all local and remote branches
-
-      - name: Check if Mule3_backup branch exists
+      - name: Check if Mule3_backup branch exists on remote
         id: check_backup
         run: |
           BACKUP_BRANCH="Mule3_backup"
           
-          # Fetch all remote branches (prune to remove deleted ones)
-          git fetch --prune origin
+          # Fetch the latest remote branches and prune deleted ones
+          git fetch --all --prune
           
+          # List all remote branches for debugging
+          echo "Remote branches:"
+          git branch -r
+
           # Check if the backup branch exists on the remote
-          if git ls-remote --heads origin "refs/heads/$BACKUP_BRANCH"; then
+          if git ls-remote --heads origin "refs/heads/$BACKUP_BRANCH" | grep -q "$BACKUP_BRANCH"; then
             echo "Backup branch '$BACKUP_BRANCH' already exists. Skipping creation."
             echo "backup_exists=true" >> $GITHUB_ENV
           else
@@ -54,14 +54,11 @@ jobs:
         run: |
           BACKUP_BRANCH="Mule3_backup"
           
-          # Fetch the latest changes from the remote repository
-          git fetch origin
-          
-          # Ensure we're on the main branch
+          # Ensure we're on the main branch and it's up-to-date
           git checkout main
-          git pull origin main  # Ensure it's up to date
+          git pull origin main
           
-          # Create a new branch from main
+          # Create the Mule3_backup branch from main
           git checkout -b $BACKUP_BRANCH
           
           # Push the new branch to the remote repository
