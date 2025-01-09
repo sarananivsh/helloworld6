@@ -1,3 +1,4 @@
+# .github/workflows/auto-merge.yml
 name: Auto Merge PRs and Delete Branch if 'dependencies' label is present
 
 on:
@@ -18,12 +19,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Trigger create-backup-branch workflow
-        uses: peter-evans/workflow-dispatch@v1.0.0 
+        uses: actions/github-script@v6
         with:
-          repository: your-username/your-repo-name
-          workflow: create-backup-branch.yml  # The workflow to call
-          ref: refs/heads/main  # You can use main or any relevant branch
+          script: |
+            const { data: workflow } = await github.actions.getWorkflow({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'create-backup-branch.yml'
+            });
+            
+            const { status } = await github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflow.id,
+              ref: 'refs/heads/main'  # Trigger the workflow on the main branch
+            });
+            if (status === 201) {
+              console.log('Backup branch workflow triggered successfully.');
+            } else {
+              console.error('Error triggering backup branch workflow');
+            }
 
   auto-merge:
     needs: create_backup_branch  # Ensure this job runs only after the create-backup-branch job finishes
