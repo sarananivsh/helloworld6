@@ -8,6 +8,7 @@ on:
       - reopened      # Trigger when a PR is reopened
     branches:
       - main          # Adjust to the base branch for your PR
+  workflow_dispatch:  # This allows manual or API-triggered execution
 
 jobs:
   create-backup:
@@ -54,4 +55,3 @@ jobs:
 
       - name: Finish Create Mule3_backup Branch
         run: echo "Mule3_backup branch creation process completed."
-
