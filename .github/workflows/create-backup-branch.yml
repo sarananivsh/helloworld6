@@ -45,8 +45,13 @@ jobs:
         # Create and switch to the new branch
         git checkout -b Mule3_backup
 
-        # Rebase the new branch onto the latest changes from the remote main branch
-        git rebase origin/main
+        # Check if the remote branch exists, and if so, pull the latest changes
+        if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
+          echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
+          git pull --rebase origin Mule3_backup  # Rebase to integrate remote changes
+        else
+          echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
+        fi
 
-        # Push the new branch to the repository
-        git push origin Mule3_backup
+        # Push the new branch to the repository (force push if necessary)
+        git push --force origin Mule3_backup  # Force push to ensure the branch is pushed
