@@ -7,7 +7,7 @@ on:
       - synchronize
       - reopened
     branches:
-      - main          # Adjust to the base branch for your PR
+      - main
   workflow_dispatch:  # This allows manual or API-triggered execution
 jobs:
   create-backup:
@@ -16,14 +16,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Ensure GITHUB_TOKEN is being used
+
+      - name: Fetch all branches from remote
+        run: |
+          git fetch --all
 
       - name: Check if Mule3_backup branch exists
         id: check_backup
         run: |
           BACKUP_BRANCH="Mule3_backup"
-          if git ls-remote --heads origin "refs/heads/$BACKUP_BRANCH"; then
+          
+          # Use the GitHub CLI to check if the branch exists on the remote repository
+          echo "Checking if the branch '$BACKUP_BRANCH' exists on the remote repository..."
+          
+          # Query the repository's branches using GitHub CLI
+          if gh api repos/${{ github.repository }}/branches/$BACKUP_BRANCH --silent; then
             echo "Backup branch '$BACKUP_BRANCH' already exists. Skipping creation."
             echo "backup_exists=true" >> $GITHUB_ENV
           else
@@ -35,8 +42,20 @@ jobs:
         if: env.backup_exists == 'false'
         run: |
           BACKUP_BRANCH="Mule3_backup"
+          
+          # Fetch the latest changes from the remote repository
           git fetch origin
-          git checkout main  # Or use PR branch if needed
+          
+          # Checkout the main branch (or the branch from which you want to create the backup)
+          git checkout main
+          
+          # Create a new backup branch from the main
           git checkout -b $BACKUP_BRANCH
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
+          
+          # Push the new backup branch to the remote repository
+          git push origin $BACKUP_BRANCH
+          
           echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
+
+      - name: Finish Create Mule3_backup Branch
+        run: echo "Mule3_backup branch creation process completed."
