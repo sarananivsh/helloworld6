@@ -1,11 +1,9 @@
-# .github/workflows/auto-merge.yml
 name: Auto Merge PRs and Delete Branch if 'dependencies' label is present
 
 on:
-  workflow_dispatch:  # Manual trigger for the workflow
+  workflow_dispatch:  # Manual trigger for the workflow (you can manually run the workflow from the GitHub UI)
   schedule:
-    - cron: '*/5 * * * *' # Runs every hour (customize as needed)
-    
+    - cron: '0 * * * *'  # Runs every hour
   pull_request:
     types:
       - labeled
