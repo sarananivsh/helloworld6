@@ -28,26 +28,21 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            console.log("Starting script...");
-            
-            const { data: workflow } = await github.actions.getWorkflow({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'create-backup-branch.yml'
-            });
-            console.log("Workflow fetched:", workflow);
+            const workflow_id = 'create-backup-branch.yml';
+            const ref = 'refs/heads/main';
 
-            const { status } = await github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: workflow.id,
-              ref: 'refs/heads/main'
-            });
+            try {
+              // Trigger the 'create-backup-branch.yml' workflow dispatch
+              const response = await github.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow_id,
+                ref: ref  // Trigger the workflow on the main branch
+              });
 
-            if (status === 201) {
-              console.log('Backup branch workflow triggered successfully.');
-            } else {
-              console.error('Error triggering backup branch workflow');
+              console.log('Backup branch workflow triggered successfully:', response);
+            } catch (error) {
+              console.error('Error triggering backup branch workflow:', error);
             }
 
   auto-merge:
