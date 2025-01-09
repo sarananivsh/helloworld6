@@ -1,64 +1,26 @@
-name: Create Mule3_backup Branch Before Other Workflows Start
+- name: Checkout repository
+  uses: actions/checkout@v3
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
 
-on:
-  pull_request:
-    types:
-      - opened        # Trigger when a PR is opened
-      - synchronize   # Trigger when a PR is updated
-      - reopened      # Trigger when a PR is reopened
-    branches:
-      - main          # Adjust to the base branch for your PR
-  workflow_dispatch:  # This allows manual or API-triggered execution
-
-jobs:
-  create-backup:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Check if Mule3_backup branch exists
-        id: check_backup
-        run: |
-          # Define the backup branch name
-          BACKUP_BRANCH="Mule3_backup"
-          
-          # Fetch the latest changes from the remote repository
-          git fetch origin
-          
-          # Check if the backup branch exists on the remote repository
-          if git show-ref --verify --quiet refs/heads/$BACKUP_BRANCH; then
-            echo "Backup branch '$BACKUP_BRANCH' already exists. Skipping creation."
-            echo "backup_exists=true" >> $GITHUB_ENV
-          else
-            echo "Backup branch '$BACKUP_BRANCH' does not exist. It will be created."
-            echo "backup_exists=false" >> $GITHUB_ENV
-          fi
-
-      - name: Create Mule3_backup branch (if not exists)
-        if: env.backup_exists == 'false'
-        run: |
-          # Define the backup branch name
-          BACKUP_BRANCH="Mule3_backup"
-          
-          # Fetch the latest changes from the remote repository
-          git fetch origin
-          
-          # Checkout the PR branch using GitHub CLI (or use the default branch if no PR)
-          gh pr checkout ${{ github.event.pull_request.number }} || git checkout main
-          
-          # Create a new backup branch from the main (or current PR branch)
-          git checkout -b $BACKUP_BRANCH
-          
-          # Set the user name and email for git commits
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Push the new backup branch to the remote repository using GITHUB_TOKEN
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
-          
-          echo "Backup branch '$BACKUP_BRANCH' created and pushed successfully."
-
-      - name: Finish Create Mule3_backup Branch
-        run: echo "Mule3_backup branch creation process completed."
+- name: Create Mule3_backup branch (if not exists)
+  if: env.backup_exists == 'false'
+  run: |
+    # Define the backup branch name
+    BACKUP_BRANCH="Mule3_backup"
+    
+    # Fetch the latest changes from the remote repository
+    git fetch origin
+    
+    # Checkout the PR branch using GitHub CLI (or use the default branch if no PR)
+    gh pr checkout ${{ github.event.pull_request.number }} || git checkout main
+    
+    # Create a new backup branch from the main (or current PR branch)
+    git checkout -b $BACKUP_BRANCH
+    
+    # Set the user name and email for git commits
+    git config user.name "GitHub Actions"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+    
+    # Push the new backup branch to the remote repository
+    git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
