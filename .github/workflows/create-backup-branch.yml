@@ -18,8 +18,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # Step 2: Create a new branch and push it to the repository
+    # Step 2: Check if the folder exists
+    - name: Check if folder exists
+      id: check-folder
+      run: |
+        # Replace 'path_to_folder' with the folder you want to check
+        if [ -d "path_to_folder" ]; then
+          echo "Folder exists"
+          echo "exists=true" >> $GITHUB_ENV
+        else
+          echo "Folder does not exist"
+          echo "exists=false" >> $GITHUB_ENV
+        fi
+
+    # Step 3: Create and push the new branch only if the folder does not exist
     - name: Create and push new branch
+      if: env.exists == 'false'  # Only run if the folder doesn't exist
       run: |
         # Set up Git user for actions
         git config --global user.name "GitHub Actions"
