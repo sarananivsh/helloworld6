@@ -24,16 +24,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Log github.context for debugging
+        run: |
+          echo "github.context = ${{ toJson(github.context) }}"
+
       - name: Trigger create-backup-branch workflow
         uses: actions/github-script@v6
         with:
           script: |
             try {
-              // Verify that the context and repo information is available
-              const { repo, owner } = github.context.repo;
+              // Log the full context to help debug
+              console.log('GitHub context:', github.context);
 
-              if (!repo || !owner) {
-                throw new Error('GitHub context is missing repo or owner information');
+              const owner = github.context.repo.owner;
+              const repo = github.context.repo.repo;
+
+              if (!owner || !repo) {
+                throw new Error('Missing repo or owner information in GitHub context.');
               }
 
               // List workflows in the repository
@@ -41,6 +48,8 @@ jobs:
                 owner: owner,
                 repo: repo,
               });
+
+              console.log('Workflows available:', workflows.data);
 
               // Find the workflow ID for the 'create-backup-branch.yml'
               const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
