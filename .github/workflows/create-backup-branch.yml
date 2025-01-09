@@ -20,11 +20,17 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}  # Ensure authentication
 
+      - name: Verify current branch
+        run: |
+          git branch -a  # Check all branches (including remote branches)
+          git remote -v  # Verify the remotes and URL
+
       - name: Fetch the latest branches and prune deleted ones
         run: |
           # Ensure we fetch the latest state from the remote
           git fetch --prune origin
-          git remote -v  # Verify the remotes
+          echo "Fetched branches:"
+          git branch -a  # List all local and remote branches
 
       - name: Check if Mule3_backup branch exists
         id: check_backup
@@ -51,8 +57,9 @@ jobs:
           # Fetch the latest changes from the remote repository
           git fetch origin
           
-          # Checkout the main branch (or PR branch)
+          # Ensure we're on the main branch
           git checkout main
+          git pull origin main  # Ensure it's up to date
           
           # Create a new branch from main
           git checkout -b $BACKUP_BRANCH
