@@ -1,7 +1,7 @@
 name: Auto Merge PRs and Delete Branch if 'dependencies' label is present
 
 on:
-  workflow_dispatch:  # Manual trigger for the workflow (you can manually run the workflow from the GitHub UI)
+  workflow_dispatch:  # Manual trigger for the workflow
   schedule:
     - cron: '0 * * * *'  # Runs every hour
   pull_request:
@@ -10,11 +10,11 @@ on:
       - synchronize
       - opened
     branches:
-      - main  # Adjust to your branch name
+      - main
 
 permissions:
-  contents: write  # Required for merging
-  pull-requests: write  # Grant permissions to merge PRs
+  contents: write
+  pull-requests: write
 
 jobs:
   create_backup_branch:
@@ -28,17 +28,20 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            console.log("Starting script...");
+            
             const { data: workflow } = await github.actions.getWorkflow({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'create-backup-branch.yml'
             });
+            console.log("Workflow fetched:", workflow);
 
             const { status } = await github.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: workflow.id,
-              ref: 'refs/heads/main'  # Trigger the workflow on the main branch
+              ref: 'refs/heads/main'
             });
 
             if (status === 201) {
@@ -48,7 +51,7 @@ jobs:
             }
 
   auto-merge:
-    needs: create_backup_branch  # Ensure this job runs only after the create-backup-branch job finishes
+    needs: create_backup_branch
     runs-on: ubuntu-latest
 
     steps:
