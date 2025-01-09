@@ -28,19 +28,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const github = require('@actions/github');
-            const token = process.env.GITHUB_TOKEN;
-
-            const workflow_id = 'create-backup-branch.yml';
-            const ref = 'refs/heads/main';
-
             try {
               // Trigger the 'create-backup-branch.yml' workflow dispatch
               const response = await github.rest.actions.createWorkflowDispatch({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
-                workflow_id: workflow_id,
-                ref: ref  // Trigger the workflow on the main branch
+                workflow_id: 'create-backup-branch.yml',
+                ref: 'refs/heads/main'  # Trigger the workflow on the main branch
               });
 
               console.log('Backup branch workflow triggered successfully:', response);
