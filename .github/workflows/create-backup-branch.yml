@@ -24,7 +24,7 @@ jobs:
           # Define the backup branch name
           BACKUP_BRANCH="Mule3_backup"
           
-          # Fetch the latest changes from the remote repository to ensure all branches are up-to-date
+          # Fetch the latest changes from the remote repository
           git fetch origin
           
           # Check if the backup branch exists on the remote repository
@@ -50,6 +50,10 @@ jobs:
           
           # Create a new backup branch from the main (or current PR branch)
           git checkout -b $BACKUP_BRANCH
+          
+          # Set the user name and email for git commits
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Push the new backup branch to the remote repository using PAT for authentication
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} $BACKUP_BRANCH
