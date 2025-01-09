@@ -48,10 +48,13 @@ jobs:
         # Check if the remote branch exists, and if so, pull the latest changes
         if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
           echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
-          git pull --rebase origin Mule3_backup  # Rebase to integrate remote changes
+          git pull --rebase origin Mule3_backup || {
+            echo "Rebase failed due to conflicts, aborting rebase.";
+            git rebase --abort;  # Abort rebase in case of conflict
+          }
         else
           echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
         fi
 
-        # Push the new branch to the repository (force push if necessary)
-        git push --force origin Mule3_backup  # Force push to ensure the branch is pushed
+        # Force push the new branch to the repository
+        git push --force origin Mule3_backup
