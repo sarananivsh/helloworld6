@@ -24,24 +24,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Log github.context for debugging
-        run: |
-          echo "github.context = ${{ toJson(github.context) }}"
-
-      - name: Trigger create-backup-branch workflow
+      - name: Get repository details and trigger backup branch workflow
         uses: actions/github-script@v6
         with:
           script: |
             try {
-              // Log the full context to help debug
-              console.log('GitHub context:', github.context);
+              // Fetch the repository details using the GitHub API
+              const { data: repository } = await github.rest.repos.get({
+                owner: github.context.actor, // Get the actor (username) of the current run
+                repo: github.context.repo.repo,
+              });
 
-              const owner = github.context.repo.owner;
-              const repo = github.context.repo.repo;
+              const owner = repository.owner.login;
+              const repo = repository.name;
 
-              if (!owner || !repo) {
-                throw new Error('Missing repo or owner information in GitHub context.');
-              }
+              console.log('Repository details:', owner, repo);
 
               // List workflows in the repository
               const workflows = await github.rest.actions.listRepoWorkflows({
@@ -78,16 +75,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Check if PR has 'dependencies' label
-        if: contains(github.event.pull_request.labels.*.name, 'dependencies')
-        run: echo "PR has 'dependencies' label. Proceeding with merge."
-
-      - name: Merge PR if label is present
-        if: contains(github.event.pull_request.labels.*.name, 'dependencies')
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --auto --delete-branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout r
