@@ -47,8 +47,8 @@ jobs:
 
               console.log('Workflows available:', workflows.data);
 
-              // Find the workflow ID for the 'create-backup-branch.yml'
-              const workflow = workflows.data.find(wf => wf.name === 'create-backup-branch.yml');
+              // Find the workflow ID for the 'create-backup-branch.yml' workflow
+              const workflow = workflows.data.workflows.find(wf => wf.name === 'Create Mule3_backup Branch Before Other Workflows Start');
               
               if (!workflow) {
                 throw new Error('create-backup-branch.yml workflow not found.');
