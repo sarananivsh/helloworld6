@@ -1,7 +1,10 @@
-name: Auto Merge PRs and Delete Branch if 'dependencies' label is present
+name: Create Backup Branch and Auto Merge PRs
 
 on:
   workflow_dispatch:  # Manual trigger for the workflow
+  push:
+    branches:
+      - main  # Trigger workflow when there is a push to the main branch (you can modify this)
   schedule:
     - cron: '0 * * * *'  # Runs every hour
   pull_request:
@@ -18,60 +21,61 @@ permissions:
   actions: write  # Add actions permission for triggering workflows
 
 jobs:
-  create_backup_branch:
+  create-backup-branch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Ensures write access to contents for creating branches
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Get repository details and trigger backup branch workflow
-        uses: actions/github-script@v6
-        with:
-          script: |
-            try {
-              const owner = process.env.GITHUB_REPOSITORY.split('/')[0];
-              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
+      - name: Check if folder exists
+        id: check-folder
+        run: |
+          if [ -d "path_to_folder" ]; then
+            echo "Folder exists"
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "Folder does not exist"
+            echo "exists=false" >> $GITHUB_ENV
 
-              console.log('Repository details:', owner, repo);
+      - name: Create and push new branch
+        if: env.exists == 'false'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
 
-              // List workflows in the repository
-              const workflows = await github.rest.actions.listRepoWorkflows({
-                owner: owner,
-                repo: repo,
-              });
+          git fetch origin
+          git checkout -b Mule3_backup
 
-              console.log('Workflows available:', workflows.data);
-
-              // Find the workflow ID for the 'create-backup-branch.yml' workflow
-              const workflow = workflows.data.workflows.find(wf => wf.name === 'Create Mule3_backup Branch Before Other Workflows Start');
-              
-              if (!workflow) {
-                throw new Error('create-backup-branch.yml workflow not found.');
+          # Check if the branch exists remotely
+          if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
+            echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
+            git pull --rebase origin Mule3_backup || {
+              echo "Rebase failed due to conflicts. Resolving conflicts automatically.";
+              # Automatic conflict resolution (this will prefer your version of the file):
+              git checkout --ours pom.xml
+              git add pom.xml
+              git rebase --continue || {
+                echo "Rebase failed even after resolving conflicts, aborting.";
+                git rebase --abort;
               }
-
-              const workflow_id = workflow.id;
-
-              // Trigger the workflow using its ID
-              const response = await github.rest.actions.createWorkflowDispatch({
-                owner: owner,
-                repo: repo,
-                workflow_id: workflow_id,
-                ref: 'refs/heads/main'
-              });
-
-              console.log('Backup branch workflow triggered successfully:', response);
-            } catch (error) {
-              console.error('Error triggering backup branch workflow:', error);
             }
+          else
+            echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
+          fi
+
+          # Push the changes to the remote repository
+          git push --force origin Mule3_backup
 
   auto-merge:
-    needs: create_backup_branch
+    needs: create-backup-branch  # Ensure that the backup branch is created before this job runs
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Check if PR has 'dependencies' label
         if: contains(github.event.pull_request.labels.*.name, 'dependencies')
