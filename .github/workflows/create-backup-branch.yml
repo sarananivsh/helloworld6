@@ -26,8 +26,7 @@ jobs:
           else
             echo "Folder does not exist"
             echo "exists=false" >> $GITHUB_ENV
-          fi
-
+          
       - name: Create and push new branch
         if: env.exists == 'false'
         run: |
@@ -40,11 +39,19 @@ jobs:
           if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
             echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
             git pull --rebase origin Mule3_backup || {
-              echo "Rebase failed due to conflicts, aborting rebase.";
-              git rebase --abort;
+              echo "Rebase failed due to conflicts. Resolving conflicts automatically.";
+              
+              # Automatic conflict resolution (this will prefer your version of the file):
+              git checkout --ours pom.xml
+              git add pom.xml
+              git rebase --continue || {
+                echo "Rebase failed even after resolving conflicts, aborting.";
+                git rebase --abort;
+              }
             }
           else
             echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
           fi
 
+          # Push the changes to the remote
           git push --force origin Mule3_backup
