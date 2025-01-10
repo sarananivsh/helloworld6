@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # Manual trigger for the workflow
   push:
     branches:
-      - main  # Trigger workflow when there is a push to the main branch (you can modify this)
+      - main  # Trigger workflow when there is a push to the main branch
   schedule:
     - cron: '0 * * * *'  # Runs every hour
   pull_request:
@@ -18,11 +18,12 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: write  # Add actions permission for triggering workflows
+  actions: write
 
 jobs:
   create-backup-branch:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write  # Ensures write access to contents for creating branches
 
@@ -39,43 +40,43 @@ jobs:
           else
             echo "Folder does not exist"
             echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Check if Mule3_backup branch exists remotely
+        id: check-branch
+        run: |
+          git fetch origin
+          if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
+            echo "Branch 'Mule3_backup' already exists remotely. Skipping creation."
+            echo "branch_exists=true" >> $GITHUB_ENV
+          else
+            echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with creation."
+            echo "branch_exists=false" >> $GITHUB_ENV
+          fi
 
       - name: Create and push new branch
-        if: env.exists == 'false'
+        if: env.branch_exists == 'false' && env.exists == 'false'
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-          git fetch origin
           git checkout -b Mule3_backup
 
-          # Check if the branch exists remotely
-          if git show-ref --verify --quiet refs/remotes/origin/Mule3_backup; then
-            echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
-            git pull --rebase origin Mule3_backup || {
-              echo "Rebase failed due to conflicts. Resolving conflicts automatically.";
-              # Automatic conflict resolution (this will prefer your version of the file):
-              git checkout --ours pom.xml
-              git add pom.xml
-              git rebase --continue || {
-                echo "Rebase failed even after resolving conflicts, aborting.";
-                git rebase --abort;
-              }
-            }
-          else
-            echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
-          fi
-
-          # Push the changes to the remote repository
+          # Push the newly created branch
           git push --force origin Mule3_backup
 
+      - name: Skip creation if branch exists
+        if: env.branch_exists == 'true'
+        run: |
+          echo "Skipping branch creation, 'Mule3_backup' already exists."
+
   auto-merge:
-    needs: create-backup-branch  # Ensure that the backup branch is created before this job runs
+    needs: create-backup-branch
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Check if PR has 'dependencies' label
         if: contains(github.event.pull_request.labels.*.name, 'dependencies')
@@ -87,3 +88,4 @@ jobs:
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto --delete-branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
