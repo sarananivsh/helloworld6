@@ -1,10 +1,10 @@
 name: Create and Push Backup Branch
 
 on:
-  workflow_dispatch:  # This allows the workflow to be triggered by another workflow
+  workflow_dispatch:  # Manual trigger for the workflow
   push:
     branches:
-      - main  # Trigger workflow when there is a push to the main branch (you can modify this)
+      - main  # Trigger workflow when there is a push to the main branch
 
 jobs:
   create-backup-branch:
@@ -26,7 +26,8 @@ jobs:
           else
             echo "Folder does not exist"
             echo "exists=false" >> $GITHUB_ENV
-          
+          fi
+
       - name: Create and push new branch
         if: env.exists == 'false'
         run: |
@@ -40,7 +41,6 @@ jobs:
             echo "Branch 'Mule3_backup' exists remotely. Pulling changes."
             git pull --rebase origin Mule3_backup || {
               echo "Rebase failed due to conflicts. Resolving conflicts automatically.";
-              
               # Automatic conflict resolution (this will prefer your version of the file):
               git checkout --ours pom.xml
               git add pom.xml
@@ -53,5 +53,4 @@ jobs:
             echo "Branch 'Mule3_backup' does not exist remotely. Proceeding with push."
           fi
 
-          # Push the changes to the remote
           git push --force origin Mule3_backup
