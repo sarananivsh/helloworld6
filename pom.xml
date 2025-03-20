@@ -251,7 +251,7 @@
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-spring-module</artifactId>
-			<version>1.4.0</version>
+			<version>1.5.0</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
