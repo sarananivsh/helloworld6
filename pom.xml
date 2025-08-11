@@ -293,7 +293,7 @@
 		<dependency>
 			<groupId>com.mulesoft.connectors</groupId>
 			<artifactId>mule-salesforce-connector</artifactId>
-			<version>11.2.0</version>
+			<version>11.2.1</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
