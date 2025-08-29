@@ -299,7 +299,7 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-db-connector</artifactId>
-			<version>1.14.16</version>
+			<version>1.14.17</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
